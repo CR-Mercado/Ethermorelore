@@ -40,9 +40,35 @@ cleanNftOwners <- function(nftOwners) {
   finalDf <- nftOwnersCopy %>%
     rowwise() %>%
     mutate(metadataList = extractNftMetadata(metadata)) %>%
-    unnest_wider(metadataList, names_repair = "minimal") %>%
-    na_if(., "")
+    unnest_wider(metadataList, names_repair = "unique") %>%
+    na_if(., "") %>%
+    rename(., "name" = "name...11", "Attribute Name" = "name...16")
 }
 
 # cleaning data
 nftOwnersClean <- cleanNftOwners(nftOwners)
+nftOwnersClean$`Rarity Score` <- as.numeric(nftOwnersClean$`Rarity Score`)
+
+# summary stats
+interestingColumns <- c(
+  "amount",
+  "contract_type",
+  "name",
+  "symbol",
+  "seller_fee_basis_points",
+  "Alignment",
+  "Background",
+  "Class",
+  "Item",
+  "Race",
+  "Race Varient",
+  "Rarity Score",
+  "Subclass",
+  "Title"
+)
+
+CreateTableOne(
+  data=nftOwnersClean,
+  vars=interestingColumns,
+  includeNA=TRUE
+  )
