@@ -2,11 +2,12 @@
 library(tidyverse)
 library(tableone)
 library(jsonlite)
+library(ggplot2)
 
 # import data
 filePath <- "~/repos/github/charlie_dao/Ethermorelore/"
 nftOwners <- read.csv(paste0(filePath, "nft_owners_2021-10-28.csv"))
-ownedPerOwner <- read.csv(paste0(filePath, "owned_per_owner_2021-10-28.csv"))
+# ownedPerOwner <- read.csv(paste0(filePath, "owned_per_owner_2021-10-28.csv"))
 rawFollowers <- read.csv(paste0(filePath, "raw_followers_2021-10-25.csv"))
 salesHistory <- read.csv(paste0(filePath, "sales_history_2021-10-28.csv"))
 salesWithFollowers <- read.csv(paste0(filePath, "sales_with_followers_2021-10-28.csv"))
@@ -72,3 +73,34 @@ CreateTableOne(
   vars=interestingColumns,
   includeNA=TRUE
   )
+
+# viz - histograms
+ggplot(nftOwnersClean, aes(x=`Rarity Score`)) + 
+  geom_histogram(binwidth=1, color = "black", fill = "gray") +
+  ggtitle('Ethermorelore NFTs: Rarity Score Histogram')
+
+barPlotColumns <- c(
+  "Alignment",
+  "Background",
+  "Class",
+  "Item",
+  "Race",
+  "Race Varient",
+  "Subclass",
+  "Title"
+)
+
+
+# viz - bar plots
+for (col in barPlotColumns) {
+  barPlotDf <- nftOwnersClean %>%
+    select(col) %>%
+    drop_na()
+  
+  barPlot <- ggplot(barPlotDf, aes(fct_infreq(get(col)))) +
+    geom_bar() +
+    coord_flip() +
+    ggtitle(paste0('Ethermorelore NFTs: ', col, ' Count'))
+  
+  print(barPlot)
+}
