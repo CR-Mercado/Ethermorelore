@@ -3,6 +3,7 @@ library(tidyverse)
 library(tableone)
 library(jsonlite)
 library(ggplot2)
+library(reshape)
 
 # set path
 filePath <- "~/repos/github/charlie_dao/Ethermorelore/"
@@ -70,15 +71,15 @@ interestingColumns <- c(
 )
 
 CreateTableOne(
-  data=nftOwnersClean,
-  vars=interestingColumns,
-  includeNA=TRUE
-  )
+  data = nftOwnersClean,
+  vars = interestingColumns,
+  includeNA = TRUE
+)
 
 # viz - histograms
-histPlot <- ggplot(nftOwnersClean, aes(x=`Rarity Score`)) + 
+histPlot <- ggplot(nftOwnersClean, aes(x = `Rarity Score`)) +
   geom_histogram(color = "gray") +
-  ggtitle('Ethermorelore NFTs: Rarity Score Histogram')
+  ggtitle("Ethermorelore NFTs: Rarity Score Histogram")
 
 print(histPlot)
 
@@ -98,12 +99,12 @@ for (col in barPlotColumns) {
   barPlotDf <- nftOwnersClean %>%
     select(col) %>%
     drop_na()
-  
+
   barPlot <- ggplot(barPlotDf, aes(fct_infreq(get(col)))) +
     geom_bar() +
     coord_flip() +
-    ggtitle(paste0('Ethermorelore NFTs: ', col, ' Count'))
-  
+    ggtitle(paste0("Ethermorelore NFTs: ", col, " Count"))
+
   print(barPlot)
 }
 
@@ -121,16 +122,41 @@ tweets <- read.csv(paste0(filePath, "tweets_2021-10-25.csv"))
 histPlotDf <- rawFollowers %>%
   mutate(follower_count_10k = replace(follower_count, follower_count > 10000, 10001))
 
-histPlot <- ggplot(histPlotDf, aes(x=follower_count_10k)) + 
+histPlot <- ggplot(histPlotDf, aes(x = follower_count_10k)) +
   geom_histogram(color = "gray") +
-  ggtitle('Ethermorelore Twitter Followers: Follower Count (0-10k+)')
+  ggtitle("Ethermorelore Twitter Followers: Follower Count (0-10k+)")
 print(histPlot)
 
 histPlotDf <- rawFollowers %>%
   filter(follower_count > 10000)
 
-histPlot <- ggplot(histPlotDf, aes(x=follower_count)) + 
+histPlot <- ggplot(histPlotDf, aes(x = follower_count)) +
   geom_histogram(color = "gray") +
-  ggtitle('Ethermorelore Twitter Followers: Follower Count (>10k)') +
-  scale_x_continuous(breaks = seq(10000,max(histPlotDf$follower_count),200000))
+  ggtitle("Ethermorelore Twitter Followers: Follower Count (>10k)") +
+  scale_x_continuous(breaks = seq(10000, max(histPlotDf$follower_count), 200000))
 print(histPlot)
+
+# viz - time series
+salesWithFollowers$date <- as.Date(salesWithFollowers$date)
+timeSeriesPlotDf <- melt(salesWithFollowers, id.vars = "date")
+timeSeriesPlotDf$logValue <- log(timeSeriesPlotDf$value + 1)
+
+timeSeriesPlot <- ggplot(
+  timeSeriesPlotDf[timeSeriesPlotDf$date > as.Date('2021-07-31'), ],
+  aes(x = date, y = value, color = variable)
+  ) +
+  geom_line() +
+  xlab("") +
+  scale_x_date(date_labels = "%m-%Y") +
+  ggtitle("Ethermorelore Sales and Social")
+print(timeSeriesPlot)
+
+timeSeriesPlot <- ggplot(
+  timeSeriesPlotDf[timeSeriesPlotDf$date > as.Date('2021-07-31'), ],
+  aes(x = date, y = logValue, color = variable)
+) +
+  geom_line() +
+  xlab("") +
+  scale_x_date(date_labels = "%m-%Y") +
+  ggtitle("Ethermorelore Sales and Social (Log)")
+print(timeSeriesPlot)
